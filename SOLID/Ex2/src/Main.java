@@ -12,13 +12,7 @@ public class Main {
         FileStore fileStore = new FileStore();
         InvoiceRepository repository = new FileInvoiceRepository(fileStore);
 
-        CafeteriaSystem sys = new CafeteriaSystem(
-                menu,
-                new PriceCalculator(),
-                new TaxCalculator(),
-                new DiscountCalculator(),
-                new InvoicePrinter(),
-                repository);
+        CafeteriaSystem sys = new CafeteriaSystem(menu, new PriceCalculator(), new TaxCalculator(), new DiscountCalculator(), new InvoicePrinter(), repository);
 
         List<OrderLine> order = List.of(
                 new OrderLine("M1", 2),
