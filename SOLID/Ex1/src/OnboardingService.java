@@ -1,47 +1,63 @@
 import java.util.*;
 
 public class OnboardingService {
-    private final FakeDb db;
 
-    public OnboardingService(FakeDb db) { this.db = db; }
+    private final StudentRepository repository;
+    private final StudentParser parser;
+    private final StudentValidator validator;
+    private final StudentIdGenerator idGenerator;
+    private final ConsolePrinter printer;
 
-    // Intentionally violates SRP: parses + validates + creates ID + saves + prints.
+    // Constructor -> dependency injection
+    public OnboardingService(
+            StudentRepository repository,
+            StudentParser parser,
+            StudentValidator validator,
+            StudentIdGenerator idGenerator,
+            ConsolePrinter printer) {
+
+        this.repository = repository;
+        this.parser = parser;
+        this.validator = validator;
+        this.idGenerator = idGenerator;
+        this.printer = printer;
+    }
+
+    // Orchestrates the onboarding workflow
     public void registerFromRawInput(String raw) {
-        System.out.println("INPUT: " + raw);
 
-        Map<String,String> kv = new LinkedHashMap<>();
-        String[] parts = raw.split(";");
-        for (String p : parts) {
-            String[] t = p.split("=", 2);
-            if (t.length == 2) kv.put(t[0].trim(), t[1].trim());
-        }
+        // Step 1: print input
+        printer.printInput(raw);
 
-        String name = kv.getOrDefault("name", "");
-        String email = kv.getOrDefault("email", "");
-        String phone = kv.getOrDefault("phone", "");
-        String program = kv.getOrDefault("program", "");
+        // Step 2: parse raw input
+        Map<String, String> kv = parser.parse(raw);
 
-        // validation inline, printing inline
-        List<String> errors = new ArrayList<>();
-        if (name.isBlank()) errors.add("name is required");
-        if (email.isBlank() || !email.contains("@")) errors.add("email is invalid");
-        if (phone.isBlank() || !phone.chars().allMatch(Character::isDigit)) errors.add("phone is invalid");
-        if (!(program.equals("CSE") || program.equals("AI") || program.equals("SWE"))) errors.add("program is invalid");
+        // Step 3: validate parsed data
+        List<String> errors = validator.validate(kv);
 
         if (!errors.isEmpty()) {
-            System.out.println("ERROR: cannot register");
-            for (String e : errors) System.out.println("- " + e);
+            printer.printErrors(errors);
             return;
         }
 
-        String id = IdUtil.nextStudentId(db.count());
-        StudentRecord rec = new StudentRecord(id, name, email, phone, program);
+        // Step 4: generate student ID
+        int count = repository.count();
+        String id = idGenerator.generate(count);
 
-        db.save(rec);
+        // Step 5: extract fields
+        String name = kv.get("name");
+        String email = kv.get("email");
+        String phone = kv.get("phone");
+        String program = kv.get("program");
 
-        System.out.println("OK: created student " + id);
-        System.out.println("Saved. Total students: " + db.count());
-        System.out.println("CONFIRMATION:");
-        System.out.println(rec);
+        // Step 6: create StudentRecord
+        StudentRecord record = new StudentRecord(id, name, email, phone, program);
+
+        // Step 7: save record
+        repository.save(record);
+
+        // Step 8: print success and confirmation
+        printer.printSuccess(id, repository.count());
+        printer.printConfirmation(record);
     }
 }
