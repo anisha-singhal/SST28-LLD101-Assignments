@@ -1,4 +1,12 @@
 public abstract class Exporter {
-    // implied "contract" but not enforced (smell)
-    public abstract ExportResult export(ExportRequest req);
+
+    // Contract: given a non-null request, always return a non-null ExportResult. Never throw.
+    public ExportResult export(ExportRequest req) {
+        if (req == null) {
+            return ExportResult.error("Request must not be null");
+        }
+        return doExport(req);
+    }
+
+    protected abstract ExportResult doExport(ExportRequest req);
 }
