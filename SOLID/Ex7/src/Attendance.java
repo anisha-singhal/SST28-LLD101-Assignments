@@ -1,0 +1,3 @@
+interface Attendance{
+    void scanAttendance();
+}
