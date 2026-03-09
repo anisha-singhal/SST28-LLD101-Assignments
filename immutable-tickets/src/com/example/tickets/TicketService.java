@@ -2,12 +2,7 @@ package com.example.tickets;
 
 import java.util.Arrays;
 
-/**
- * Service layer that creates and "updates" tickets.
- *
- * Since IncidentTicket is now immutable, every operation that needs
- * to change something returns a brand-new ticket instead of mutating.
- */
+// since tickets are immutable now, any "update" returns a new ticket
 public class TicketService {
 
     public IncidentTicket createTicket(String id, String reporterEmail, String title) {
@@ -19,10 +14,7 @@ public class TicketService {
                 .build();
     }
 
-    /**
-     * Creates a new ticket that's a copy of the original but with
-     * CRITICAL priority and an ESCALATED tag added.
-     */
+    // returns a copy with CRITICAL priority + ESCALATED tag
     public IncidentTicket escalateToCritical(IncidentTicket t) {
         return t.toBuilder()
                 .priority("CRITICAL")
@@ -30,7 +22,6 @@ public class TicketService {
                 .build();
     }
 
-    /** Returns a new ticket with the assignee set. */
     public IncidentTicket assign(IncidentTicket t, String assigneeEmail) {
         return t.toBuilder()
                 .assigneeEmail(assigneeEmail)

@@ -4,33 +4,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Immutable incident ticket. All state is set at construction time
- * through the Builder, and validated before the object is created.
- *
- * Once built, nothing can change — no setters, no mutable leaks.
- */
+// refactored to be immutable - all fields final, no setters
+// use the Builder to create tickets, toBuilder() to make modified copies
 public final class IncidentTicket {
 
     private final String id;
     private final String reporterEmail;
     private final String title;
-
     private final String description;
     private final String priority;       // LOW, MEDIUM, HIGH, CRITICAL
     private final List<String> tags;
     private final String assigneeEmail;
     private final boolean customerVisible;
     private final Integer slaMinutes;
-    private final String source;         // e.g. "CLI", "WEBHOOK", "EMAIL"
+    private final String source;         // CLI, WEBHOOK, EMAIL etc
 
-    // only the builder can create tickets
     private IncidentTicket(Builder b) {
         this.id = b.id;
         this.reporterEmail = b.reporterEmail;
         this.title = b.title;
         this.description = b.description;
         this.priority = b.priority;
+        // defensive copy + wrap in unmodifiable so nobody can tamper
         this.tags = Collections.unmodifiableList(new ArrayList<>(b.tags));
         this.assigneeEmail = b.assigneeEmail;
         this.customerVisible = b.customerVisible;
@@ -38,23 +33,19 @@ public final class IncidentTicket {
         this.source = b.source;
     }
 
-    // --- getters (no setters!) ---
-
     public String getId() { return id; }
     public String getReporterEmail() { return reporterEmail; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public String getPriority() { return priority; }
-    public List<String> getTags() { return tags; }  // already unmodifiable
+    public List<String> getTags() { return tags; }
     public String getAssigneeEmail() { return assigneeEmail; }
     public boolean isCustomerVisible() { return customerVisible; }
     public Integer getSlaMinutes() { return slaMinutes; }
     public String getSource() { return source; }
 
-    /**
-     * Returns a new Builder pre-filled with this ticket's data,
-     * so you can "modify" by creating a slightly different copy.
-     */
+    // creates a builder pre-filled with current ticket data
+    // so we can "update" by building a slightly different copy
     public Builder toBuilder() {
         Builder b = new Builder(this.id, this.reporterEmail, this.title);
         b.description = this.description;
@@ -83,15 +74,14 @@ public final class IncidentTicket {
                 '}';
     }
 
-    // ========================= Builder =========================
+    // --------- Builder ---------
 
     public static class Builder {
-        // required
         private String id;
         private String reporterEmail;
         private String title;
 
-        // optional – sensible defaults
+        // optional stuff
         private String description;
         private String priority;
         private List<String> tags = new ArrayList<>();
@@ -114,8 +104,7 @@ public final class IncidentTicket {
         public Builder source(String val)       { this.source = val;     return this; }
 
         public Builder tags(List<String> val) {
-            // defensive copy so caller can't mess with our list later
-            this.tags = new ArrayList<>(val);
+            this.tags = new ArrayList<>(val); // defensive copy
             return this;
         }
 
@@ -124,25 +113,19 @@ public final class IncidentTicket {
             return this;
         }
 
-        /**
-         * Validates everything and returns an immutable IncidentTicket.
-         * All validation is centralised here — nowhere else.
-         */
+        // all validation happens here and nowhere else
         public IncidentTicket build() {
-            // required fields
             Validation.requireTicketId(id);
             Validation.requireEmail(reporterEmail, "reporterEmail");
             Validation.requireNonBlank(title, "title");
             Validation.requireMaxLen(title, 80, "title");
 
-            // optional but constrained
             Validation.requireOneOf(priority, "priority",
                     "LOW", "MEDIUM", "HIGH", "CRITICAL");
 
             if (assigneeEmail != null && !assigneeEmail.trim().isEmpty()) {
                 Validation.requireEmail(assigneeEmail, "assigneeEmail");
             }
-
             Validation.requireRange(slaMinutes, 5, 7200, "slaMinutes");
 
             return new IncidentTicket(this);

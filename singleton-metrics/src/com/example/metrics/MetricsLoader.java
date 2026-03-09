@@ -4,9 +4,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-/**
- * Loads default metric keys from a properties file into the singleton registry.
- */
 public class MetricsLoader {
 
     public MetricsRegistry loadFromFile(String path) throws IOException {
@@ -15,7 +12,7 @@ public class MetricsLoader {
             props.load(fis);
         }
 
-        // use the singleton instead of creating a new instance
+        // grab the singleton instead of doing new MetricsRegistry()
         MetricsRegistry registry = MetricsRegistry.getInstance();
 
         for (String key : props.stringPropertyNames()) {

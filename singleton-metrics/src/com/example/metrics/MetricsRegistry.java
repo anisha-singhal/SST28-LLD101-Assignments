@@ -6,36 +6,27 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Global metrics registry — proper thread-safe Singleton.
- *
- * Uses the "initialization-on-demand holder" idiom for lazy, safe init.
- * Also guards against reflection and serialization attacks.
- */
+// thread-safe singleton using the static holder pattern (Bill Pugh approach)
+// also guards against reflection and serialization breaking the singleton
 public class MetricsRegistry implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    // flag to detect if someone tries to construct a second instance via reflection
-    private static boolean instanceCreated = false;
+    private static boolean alreadyCreated = false;
 
     private final Map<String, Long> counters = new HashMap<>();
 
-    // private ctor — blocks direct instantiation and reflection attacks
+    // private constructor - if someone tries reflection we throw
     private MetricsRegistry() {
-        if (instanceCreated) {
-            throw new RuntimeException(
-                "MetricsRegistry is a singleton — use getInstance()");
+        if (alreadyCreated) {
+            throw new RuntimeException("Cannot create another instance, use getInstance()");
         }
-        instanceCreated = true;
+        alreadyCreated = true;
     }
 
-    /**
-     * Bill Pugh holder — JVM guarantees the inner class is loaded
-     * only when getInstance() is first called, and class loading
-     * is inherently thread-safe, so no synchronization needed.
-     */
+    // inner class only gets loaded when getInstance() is called first time
+    // and class loading itself is thread safe so we dont need synchronized
     private static class Holder {
         private static final MetricsRegistry INSTANCE = new MetricsRegistry();
     }
@@ -43,8 +34,6 @@ public class MetricsRegistry implements Serializable {
     public static MetricsRegistry getInstance() {
         return Holder.INSTANCE;
     }
-
-    // --- business methods (unchanged) ---
 
     public synchronized void setCount(String key, long value) {
         counters.put(key, value);
@@ -62,7 +51,7 @@ public class MetricsRegistry implements Serializable {
         return Collections.unmodifiableMap(new HashMap<>(counters));
     }
 
-    /** Ensures deserialization returns the existing singleton. */
+    // makes sure deserialization gives back the same singleton
     @Serial
     private Object readResolve() {
         return getInstance();
