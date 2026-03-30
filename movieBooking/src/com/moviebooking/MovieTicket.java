@@ -10,13 +10,17 @@ public class MovieTicket {
     private List<String> bookedSeats;
     private double totalAmount;
     private BookingStatus status;
+    private String userId;
+    private PaymentMode paymentMode;
 
-    public MovieTicket(Show show, List<String> bookedSeats, double totalAmount) {
+    public MovieTicket(Show show, List<String> bookedSeats, double totalAmount, String userId, PaymentMode paymentMode) {
         this.ticketId = "TICKET-" + (++counter);
         this.show = show;
         this.bookedSeats = bookedSeats;
         this.totalAmount = totalAmount;
         this.status = BookingStatus.CONFIRMED;
+        this.userId = userId;
+        this.paymentMode = paymentMode;
     }
 
     public void cancel() {
@@ -28,4 +32,6 @@ public class MovieTicket {
     public List<String> getBookedSeats() { return bookedSeats; }
     public double getTotalAmount() { return totalAmount; }
     public BookingStatus getStatus() { return status; }
+    public String getUserId() { return userId; }
+    public PaymentMode getPaymentMode() { return paymentMode; }
 }
